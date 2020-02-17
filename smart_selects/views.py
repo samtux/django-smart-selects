@@ -1,4 +1,21 @@
-from django.http import JsonResponse
+try:  # JsonResponse is only available in Django >= 1.7
+    from django.http import JsonResponse
+except ImportError:
+    from django.utils import simplejson
+    from django.http import HttpResponse
+
+    class JsonResponse(HttpResponse):
+        """
+            JSON response
+        """
+        def __init__(self, content, mimetype='application/json', status=None, content_type=None):
+            super(JsonResponse, self).__init__(
+                content=simplejson.dumps(content),
+                mimetype=mimetype,
+                status=status,
+                content_type=content_type,
+            )
+
 from django.db.models import Q
 from django.utils.six import iteritems
 from django.views.decorators.cache import never_cache
@@ -70,7 +87,7 @@ def filterchain(request, app, model, field, foreign_key_app_name, foreign_key_mo
         sort_results(results)
 
     serialized_results = serialize_results(results)
-    return JsonResponse(serialized_results, safe=False)
+    return JsonResponse(serialized_results)
 
 
 @never_cache
@@ -102,4 +119,4 @@ def filterchain_all(request, app, model, field, foreign_key_app_name,
         serialize_results(excluded)
     )
 
-    return JsonResponse(serialized_results, safe=False)
+    return JsonResponse(serialized_results)
